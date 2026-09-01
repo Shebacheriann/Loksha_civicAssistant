@@ -1,0 +1,138 @@
+Update the Loksha Civic Grievance Portal UI and interaction flow. Keep ALL existing functionality, data, navigation, and mobile UI intact. Do not remove any existing features. The goal is to make the desktop version look and behave like a polished, professional civic-services website rather than a stretched mobile screen.
+
+IMPORTANT:
+- Make these changes carefully across the relevant pages.
+- Do not replace the existing application with a new design.
+- Preserve the existing Loksha branding, blue/green/purple visual language, icons, and overall design identity.
+- Make the layout responsive so desktop and mobile remain appropriate separately.
+
+1. FILE A COMPLAINT PAGE
+Redesign the desktop layout of the File a Complaint page.
+
+- Keep the back button at the top, properly aligned with the page content.
+- Keep the four complaint input options:
+  • Talk – Describe the issue
+  • Text – Add details
+  • Photo / Video – Add evidence
+  • Location – Confirm location
+- These should appear as proper large interactive cards/buttons with icons, arranged cleanly in a responsive 2x2 grid on desktop.
+- Each card must clearly look clickable.
+- Show a clear selected/completed state ONLY after the user actually enters/completes that information.
+- Do NOT pre-check Talk, Text, Photo/Video, or Location when they have not been completed.
+- Text should never overlap, wrap badly, or appear outside its card.
+- Add a clean progress bar below the page heading. The progress bar should represent completion progress, but DO NOT display text such as "3 of 3 required steps completed".
+- These options are NOT all mandatory. A user should be able to submit a complaint without completing every optional field.
+
+BOTTOM ACTION AREA:
+- Replace the current stretched Save & Submit button and poorly formatted Save/View buttons.
+- Create a professional action section at the bottom.
+- Use clearly separated buttons:
+  1. Save
+  2. Save & Submit
+  3. View Complaint
+- Buttons should have sensible widths and alignment, not stretch unnecessarily across the entire screen.
+- Make the primary action visually prominent while keeping the secondary actions clearly visible.
+- Ensure buttons remain properly positioned at the bottom of the complaint content and never overlap other content.
+
+2. COMPLAINT SUB-PAGE NAVIGATION
+When the user clicks Talk, Text, Photo/Video, or Location from File a Complaint:
+
+- Do NOT make the main top navigation disappear or become confusing.
+- Keep the main website navigation/header unchanged.
+- Add a secondary complaint-flow navigation bar directly below the main website header.
+- This secondary bar should contain:
+  Talk | Text | Photo / Video | Location
+- The currently selected section should be visually highlighted.
+- Clicking one of these items should switch directly to that complaint section/page.
+- The user should be able to move between Talk, Text, Photo/Video and Location without being taken completely out of the complaint workflow.
+- Include a clear way to return to the main File a Complaint overview.
+- The complaint flow should feel like one continuous multi-step form.
+
+3. LOCATION PAGE
+The Location page must support THREE ways of providing a complaint location:
+
+OPTION 1 — USE CURRENT LOCATION
+- When the user clicks "Use Current Location", request browser/device location permission at that moment.
+- Do NOT request location access immediately when the Location page opens.
+- Only request permission after the user explicitly clicks the current-location button.
+- If permission is denied, show a clear, friendly error message and allow the user to choose another method.
+- After location is obtained, display the coordinates and resolve/show the location on the map.
+
+OPTION 2 — CHOOSE LOCATION MANUALLY ON MAP
+- Provide a visible interactive map.
+- The user must be able to manually select/pin a location on the map.
+- This option must NOT require detecting the user's current location.
+- Do not request browser geolocation permission for this option.
+- After the user selects a point, display the selected latitude and longitude and the resolved address if available.
+- Provide a clear "Confirm Location" action.
+
+OPTION 3 — ENTER ADDRESS MANUALLY
+- Provide an address input field.
+- The user can type an address manually.
+- After entering the address, use the available geocoding/map functionality to locate it on the map.
+- Show the resulting location on the map for the user to review.
+- The user must explicitly confirm the location before it is marked complete.
+
+LOCATION UI:
+- Present the three options as clear cards/tabs/buttons.
+- Make it obvious which method is currently selected.
+- Do not mark Location as completed until the user actually confirms a location.
+- Do not show fake/sample GPS data as though it were the user's real location.
+
+4. ALL PAGES — DESKTOP UI QUALITY
+Review ALL existing pages, including:
+- Welcome/Home
+- Login
+- OTP
+- Sign Up
+- Home/Dashboard
+- File a Complaint
+- Talk
+- Text
+- Photo/Video
+- Location
+- Track Complaints
+- View Complaint
+- Chat with Loksha
+
+Fix the layout consistently across the entire website:
+- Proper content width and centered/max-width containers.
+- Consistent margins and padding.
+- Professional typography hierarchy.
+- Properly sized headings, subtitles, labels and body text.
+- Consistent button heights, widths, border radius and spacing.
+- No default browser-looking buttons.
+- No text overlapping.
+- No elements stuck at the extreme left or stretched unnecessarily across the screen.
+- No excessive empty space caused by mobile dimensions being reused on desktop.
+- Cards, forms and sections should have professional spacing and alignment.
+- Ensure everything is responsive.
+
+5. LOGIN + OTP
+Specifically fix the Login and OTP screens:
+- Properly format the mobile-number input field.
+- Country code (+91) should be separated cleanly from the number input.
+- The number should never overlap the placeholder or icon.
+- Use a proper input container with correct padding.
+- Format the OTP screen with separate, evenly spaced OTP input boxes.
+- Ensure the keyboard/input experience works correctly on mobile as well.
+- Make the forms look like professional website authentication forms on desktop while remaining mobile-friendly.
+
+6. IMPORTANT FUNCTIONALITY RULES
+- Do not break existing navigation.
+- Do not remove the Mobile Preview functionality.
+- Do not remove the existing mobile layout.
+- Desktop should look like a proper website.
+- Mobile should continue to look like the existing mobile application.
+- Use responsive breakpoints rather than creating duplicated disconnected applications.
+- Reuse existing components where possible.
+- Do not introduce fake backend functionality.
+- If a real map/geocoding service is already configured, use it.
+- If a map service/API is not configured, build the UI and interaction structure without pretending that real geocoding/location data exists.
+
+After implementing these changes:
+1. Run the project.
+2. Check desktop pages.
+3. Check mobile/responsive behavior.
+4. Fix any layout or console errors.
+5. Do not make additional unrelated changes.

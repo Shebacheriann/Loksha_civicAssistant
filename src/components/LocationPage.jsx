@@ -1,292 +1,467 @@
 import React, { useState } from 'react';
-import { 
-  ChevronLeft, 
-  MapPin, 
-  Map as MapIcon, 
-  Edit3, 
-  Check, 
-  Sparkles, 
-  Search, 
-  RefreshCw,
+import {
+  ChevronLeft,
+  MapPin,
+  Map as MapIcon,
+  Edit3,
+  Check,
+  Sparkles,
+  Search,
   Navigation,
-  Compass,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle,
+  MousePointer2
 } from 'lucide-react';
 
+const methods = [
+  {
+    id: 'current',
+    title: 'Use Current Location',
+    description: 'Ask your device for its current position',
+    icon: Navigation
+  },
+  {
+    id: 'map',
+    title: 'Choose on Map',
+    description: 'Place a pin without sharing your device location',
+    icon: MapIcon
+  },
+  {
+    id: 'address',
+    title: 'Enter Address',
+    description: 'Type an address or landmark manually',
+    icon: Edit3
+  }
+];
+
 export default function LocationPage({ initialLocation, onSaveLocation, onBack }) {
-  // Method selected: null (shows 3 options) | 'current' | 'map' | 'address'
   const [method, setMethod] = useState(null);
-
-  // Process Step: 1 (Approximate) -> 2 (Map Preview) -> 3 (Confirmed & Coordinates)
   const [step, setStep] = useState(1);
-
-  // Address & Coordinates state
   const [addressText, setAddressText] = useState(initialLocation || '');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isAiSearching, setIsAiSearching] = useState(false);
-  const [coords, setCoords] = useState({ lat: 12.9716, lng: 77.5946 });
-  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(initialLocation || '');
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [coords, setCoords] = useState(null);
+  const [mapPoint, setMapPoint] = useState(null);
+  const [manualCoords, setManualCoords] = useState({ lat: '', lng: '' });
 
-  // Method 1: Use Current Location
+  const selectMethod = (nextMethod) => {
+    setMethod(nextMethod);
+    setStep(nextMethod === 'map' ? 2 : 1);
+    setLocationError('');
+    setStatusMessage('');
+    setIsLocating(false);
+    setCoords(null);
+    setMapPoint(null);
+
+    if (nextMethod === 'address') {
+      setSearchQuery(addressText || '');
+    } else if (nextMethod === 'map') {
+      setAddressText('');
+    }
+  };
+
   const handleSelectCurrentLocation = () => {
     setMethod('current');
     setStep(1);
-    setAddressText('Detecting GPS location...');
+    setLocationError('');
+    setStatusMessage('');
+    setIsLocating(true);
+    setCoords(null);
+    setMapPoint(null);
 
-    setTimeout(() => {
-      setAddressText('4th Cross Road, Ward 112, MG Road');
-      setCoords({ lat: 12.9716, lng: 77.5946 });
-      setStep(2); // Move to Map preview
-    }, 1200);
+    if (!navigator.geolocation) {
+      setIsLocating(false);
+      setLocationError('Location services are not available in this browser. You can choose the map or address option instead.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextCoords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setCoords(nextCoords);
+        setAddressText('Current device location');
+        setMapPoint({ left: 50, top: 50 });
+        setStatusMessage('Your browser provided this location. An address lookup service is not configured, so the address is not being guessed.');
+        setIsLocating(false);
+        setStep(2);
+      },
+      (error) => {
+        setIsLocating(false);
+        setStep(1);
+        setLocationError(
+          error.code === error.PERMISSION_DENIED
+            ? 'Location permission was denied. You can choose the map or address option instead.'
+            : 'We could not get your current location. You can choose the map or address option instead.'
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
-  // Method 2: Choose on Map
-  const handleSelectChooseOnMap = () => {
-    setMethod('map');
-    setStep(2); // Opens map directly for manual selection
-    setAddressText('Selected Pin Location: 2nd Main Road, Ward 112');
-    setCoords({ lat: 12.9734, lng: 77.5982 });
+  const handleSearchAddress = (event) => {
+    event.preventDefault();
+    const nextAddress = searchQuery.trim();
+    if (!nextAddress) return;
+
+    setAddressText(nextAddress);
+    setCoords(null);
+    setMapPoint(null);
+    setLocationError('');
+    setStatusMessage('Address captured for review. A geocoding service is not configured, so Loksha will not invent coordinates or a map result.');
+    setStep(2);
   };
 
-  // Method 3: Enter Address
-  const handleSelectEnterAddress = () => {
-    setMethod('address');
-    setStep(1);
-    setSearchQuery('');
+  const handleMapClick = (event) => {
+    if (method === 'current') return;
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const left = Math.min(94, Math.max(6, ((event.clientX - bounds.left) / bounds.width) * 100));
+    const top = Math.min(90, Math.max(10, ((event.clientY - bounds.top) / bounds.height) * 100));
+
+    setMapPoint({ left, top });
+    setCoords(null);
+    setLocationError('');
+    setStatusMessage(
+      method === 'map'
+        ? 'Pin selected on the map preview. Add latitude and longitude below if you have them; a map provider is required to resolve them automatically.'
+        : 'The address is ready to review. You can also place a reference pin, but it will not be treated as a real geocoded result.'
+    );
   };
 
-  const handleSearchAddress = (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    setIsAiSearching(true);
-    setTimeout(() => {
-      setIsAiSearching(false);
-      setAddressText(searchQuery + ', Ward 112');
-      setCoords({ lat: 12.9751, lng: 77.6011 });
-      setStep(2); // Map preview after AI geocoding
-    }, 1000);
+  const handleManualCoordinateChange = (key, value) => {
+    setManualCoords((previous) => ({ ...previous, [key]: value }));
+    setCoords(null);
   };
 
-  // Step 3: Final User Confirmation
+  const getManualCoordinates = () => {
+    const lat = Number(manualCoords.lat);
+    const lng = Number(manualCoords.lng);
+    if (
+      manualCoords.lat === '' ||
+      manualCoords.lng === '' ||
+      Number.isNaN(lat) ||
+      Number.isNaN(lng) ||
+      lat < -90 ||
+      lat > 90 ||
+      lng < -180 ||
+      lng > 180
+    ) {
+      return null;
+    }
+    return { lat, lng };
+  };
+
+  const selectedCoordinates = coords || getManualCoordinates();
+  const canConfirm =
+    (method === 'current' && Boolean(coords)) ||
+    (method === 'map' && Boolean(mapPoint)) ||
+    (method === 'address' && Boolean(addressText.trim()));
+
   const handleConfirmLocation = () => {
-    setIsConfirmed(true);
+    if (!canConfirm) {
+      setLocationError(
+        method === 'map'
+          ? 'Select a point on the map before confirming this location.'
+          : 'Add an address or request your current location before confirming.'
+      );
+      return;
+    }
+
+    setLocationError('');
+    setStatusMessage('Location details are ready. Review them once more, then save the confirmed location.');
     setStep(3);
   };
 
   const handleFinalSave = () => {
+    if (!canConfirm) return;
+
     onSaveLocation({
-      address: addressText || 'Confirmed Location, Ward 112',
-      lat: coords.lat,
-      lng: coords.lng,
-      isConfirmed: true
+      address:
+        addressText.trim() ||
+        (method === 'map' ? 'Selected map point' : 'Current device location'),
+      lat: selectedCoordinates?.lat ?? null,
+      lng: selectedCoordinates?.lng ?? null,
+      isConfirmed: true,
+      source: method
     });
+  };
+
+  const handleBack = () => {
+    if (step > 1 && method && method !== 'map') {
+      setStep(1);
+      setLocationError('');
+      return;
+    }
+    if (method) {
+      setMethod(null);
+      setLocationError('');
+      setStatusMessage('');
+      return;
+    }
+    onBack();
   };
 
   return (
     <div className="file-complaint-page location-full-page">
-      
-      {/* Top Bar */}
       <div className="top-nav-bar">
-        <button 
-          className="back-btn" 
-          onClick={() => {
-            if (step > 1 && method) {
-              setStep(1);
-            } else if (method) {
-              setMethod(null);
-            } else {
-              onBack();
-            }
-          }}
-        >
+        <button className="back-btn" onClick={handleBack} aria-label="Back">
           <ChevronLeft size={20} />
         </button>
         <span className="nav-page-title">Confirm Location</span>
-        <div style={{ width: 38 }}></div>
+        <div className="top-nav-spacer" />
       </div>
 
       <div className="location-page-content">
-        
-        {/* Main Header */}
         <div className="page-header-group">
+          <span className="page-eyebrow">Complaint details</span>
           <h1 className="page-main-title">Confirm Location</h1>
           <p className="page-subtitle">
-            Choose how you want to provide the complaint location.
+            Choose the safest and most accurate way to tell officers where the issue is.
           </p>
         </div>
 
-        {/* -------------------------------------------------- */}
-        {/* VIEW 1: 3 METHOD OPTIONS (Initial Choice) */}
-        {/* -------------------------------------------------- */}
         {!method && (
           <div className="location-methods-list">
-            
-            {/* Option 1: Use Current Location */}
-            <div 
-              className="location-method-card"
-              onClick={handleSelectCurrentLocation}
-            >
-              <div className="method-icon-box current">
-                <Navigation size={22} />
-              </div>
-              <div className="method-info">
-                <h3 className="method-title">📍 Use Current Location</h3>
-                <p className="method-sub">Detect my current location</p>
-              </div>
-            </div>
-
-            {/* Option 2: Choose on Map */}
-            <div 
-              className="location-method-card"
-              onClick={handleSelectChooseOnMap}
-            >
-              <div className="method-icon-box map">
-                <MapIcon size={22} />
-              </div>
-              <div className="method-info">
-                <h3 className="method-title">🗺️ Choose on Map</h3>
-                <p className="method-sub">Select the location manually</p>
-              </div>
-            </div>
-
-            {/* Option 3: Enter Address */}
-            <div 
-              className="location-method-card"
-              onClick={handleSelectEnterAddress}
-            >
-              <div className="method-icon-box address">
-                <Edit3 size={22} />
-              </div>
-              <div className="method-info">
-                <h3 className="method-title">✏️ Enter Address</h3>
-                <p className="method-sub">Type an address and find it on the map</p>
-              </div>
-            </div>
-
+            {methods.map(({ id, title, description, icon: Icon }) => (
+              <button
+                type="button"
+                className="location-method-card"
+                key={id}
+                onClick={() => (id === 'current' ? handleSelectCurrentLocation() : selectMethod(id))}
+              >
+                <span className={`method-icon-box ${id}`}>
+                  <Icon size={22} />
+                </span>
+                <span className="method-info">
+                  <strong className="method-title">{title}</strong>
+                  <span className="method-sub">{description}</span>
+                </span>
+                <span className="method-card-arrow">›</span>
+              </button>
+            ))}
           </div>
         )}
 
-        {/* -------------------------------------------------- */}
-        {/* VIEW 2: METHOD WORKFLOW (Steps 1, 2, 3) */}
-        {/* -------------------------------------------------- */}
         {method && (
           <div className="location-workflow-container">
-            
-            {/* Step Breadcrumb Trail */}
-            <div className="step-breadcrumb">
-              <span className={`step-chip ${step >= 1 ? 'active' : ''}`}>1. Approximate</span>
-              <span className="step-arrow">➔</span>
-              <span className={`step-chip ${step >= 2 ? 'active' : ''}`}>2. Map</span>
-              <span className="step-arrow">➔</span>
+            <div className="location-method-tabs" role="tablist" aria-label="Location method">
+              {methods.map(({ id, title, icon: Icon }) => (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={method === id}
+                  className={`location-method-tab ${method === id ? 'active' : ''}`}
+                  key={id}
+                  onClick={() => selectMethod(id)}
+                >
+                  <Icon size={15} />
+                  <span>{title}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="step-breadcrumb" aria-label="Location progress">
+              <span className={`step-chip ${step >= 1 ? 'active' : ''}`}>1. Provide</span>
+              <span className="step-arrow">→</span>
+              <span className={`step-chip ${step >= 2 ? 'active' : ''}`}>2. Review map</span>
+              <span className="step-arrow">→</span>
               <span className={`step-chip ${step === 3 ? 'confirmed' : ''}`}>
-                3. Exact Coords {step === 3 ? '✓' : ''}
+                3. Confirm {step === 3 ? '✓' : ''}
               </span>
             </div>
 
-            {/* METHOD 3 SEARCH BAR (Step 1 of Enter Address) */}
+            {method === 'current' && step === 1 && (
+              <div className="location-action-card">
+                <span className="location-action-icon current">
+                  <Navigation size={24} />
+                </span>
+                <div>
+                  <h2>Use your current location</h2>
+                  <p>
+                    Loksha will ask your browser for permission only after you press the button below.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="primary-btn location-action-btn"
+                  onClick={handleSelectCurrentLocation}
+                  disabled={isLocating}
+                >
+                  <Navigation size={17} />
+                  <span>{isLocating ? 'Requesting permission…' : 'Use Current Location'}</span>
+                </button>
+              </div>
+            )}
+
             {method === 'address' && step === 1 && (
               <form onSubmit={handleSearchAddress} className="address-search-form">
-                <label className="form-label">Type Address or Landmark</label>
-                <div className="input-icon-wrapper" style={{ marginBottom: '14px' }}>
+                <label className="form-label" htmlFor="complaint-address">
+                  Address or landmark
+                </label>
+                <div className="input-icon-wrapper">
                   <Search size={18} className="input-icon" />
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    style={{ paddingLeft: '42px', background: '#FFFFFF' }}
+                  <input
+                    id="complaint-address"
+                    type="text"
+                    className="form-input"
                     placeholder="e.g. MG Road Metro Station Gate 2"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(event) => setSearchQuery(event.target.value)}
                     required
                   />
                 </div>
-                <button type="submit" className="primary-btn" style={{ borderRadius: '24px' }}>
-                  {isAiSearching ? (
-                    <>
-                      <RefreshCw size={16} className="spin-anim" />
-                      <span>Loksha AI Searching Map...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={16} />
-                      <span>Find on Map with Loksha AI</span>
-                    </>
-                  )}
+                <div className="location-info-note">
+                  <AlertCircle size={15} />
+                  <span>No geocoding service is configured. Your typed address will be shown for review without fabricated coordinates.</span>
+                </div>
+                <button type="submit" className="primary-btn location-search-btn">
+                  <Sparkles size={16} />
+                  <span>Review Address</span>
                 </button>
               </form>
             )}
 
-            {/* STEP 2 & 3: MAP PREVIEW & CONFIRMATION */}
             {step >= 2 && (
               <div className="map-view-box">
-                {/* Simulated Interactive Vector Map Canvas */}
-                <div className="vector-map-canvas">
-                  <div className="map-grid-lines"></div>
-                  <div className="map-road-1"></div>
-                  <div className="map-road-2"></div>
-                  <div className="map-ward-tag">Ward 112 Circle</div>
-
-                  {/* Moveable Pin Marker */}
-                  <div className="map-center-pin">
-                    <div className="pin-pulse"></div>
-                    <MapPin size={34} color="#EF4444" fill="#FEF2F2" />
-                  </div>
+                <div
+                  className={`vector-map-canvas ${method === 'current' ? 'device-location-map' : ''}`}
+                  onClick={handleMapClick}
+                  role="application"
+                  aria-label={method === 'current' ? 'Current location preview' : 'Select a point on the map preview'}
+                >
+                  <div className="map-grid-lines" />
+                  <div className="map-road-1" />
+                  <div className="map-road-2" />
+                  <div className="map-ward-tag">Map preview</div>
+                  {method !== 'current' && !mapPoint && (
+                    <div className="map-empty-hint">
+                      <MousePointer2 size={16} />
+                      <span>Click anywhere to place a pin</span>
+                    </div>
+                  )}
+                  {mapPoint && (
+                    <div
+                      className="map-center-pin"
+                      style={{ left: `${mapPoint.left}%`, top: `${mapPoint.top}%` }}
+                      aria-label="Selected map point"
+                    >
+                      <div className="pin-pulse" />
+                      <MapPin size={34} color="#EF4444" fill="#FEF2F2" />
+                    </div>
+                  )}
                 </div>
 
-                {/* Approximate / Selected Address Display */}
                 <div className="address-result-card">
                   <span className="address-label">
-                    {method === 'current' ? 'GPS Location:' : (method === 'map' ? 'Selected Pin:' : 'Geocoded Address:')}
+                    {method === 'current'
+                      ? 'Device location'
+                      : method === 'map'
+                        ? 'Selected map point'
+                        : 'Address for review'}
                   </span>
-                  <h4 className="address-text">{addressText}</h4>
-                  
-                  {/* Step 3: Exact Coordinates (Shown ONLY after confirmation) */}
-                  {step === 3 && (
-                    <div className="exact-coords-box">
-                      <div className="coords-badge">
-                        <CheckCircle2 size={16} color="#10B981" />
-                        <span>Exact Coordinates Confirmed ✓</span>
+                  <h4 className="address-text">
+                    {addressText ||
+                      (mapPoint
+                        ? 'Pin selected on the map preview'
+                        : 'No address resolved')}
+                  </h4>
+
+                  {method === 'map' && (
+                    <div className="manual-coordinates-fields">
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="manual-latitude">Latitude (optional)</label>
+                        <input
+                          id="manual-latitude"
+                          type="number"
+                          min="-90"
+                          max="90"
+                          step="any"
+                          className="form-input"
+                          placeholder="e.g. 12.9716"
+                          value={manualCoords.lat}
+                          onChange={(event) => handleManualCoordinateChange('lat', event.target.value)}
+                        />
                       </div>
-                      <div className="coords-values">
-                        <span>Latitude: <strong>{coords.lat.toFixed(4)}° N</strong></span>
-                        <span>Longitude: <strong>{coords.lng.toFixed(4)}° E</strong></span>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="manual-longitude">Longitude (optional)</label>
+                        <input
+                          id="manual-longitude"
+                          type="number"
+                          min="-180"
+                          max="180"
+                          step="any"
+                          className="form-input"
+                          placeholder="e.g. 77.5946"
+                          value={manualCoords.lng}
+                          onChange={(event) => handleManualCoordinateChange('lng', event.target.value)}
+                        />
                       </div>
                     </div>
+                  )}
+
+                  {selectedCoordinates && (
+                    <div className="exact-coords-box">
+                      <div className="coords-badge">
+                        <CheckCircle2 size={16} />
+                        <span>{step === 3 ? 'Coordinates confirmed' : 'Coordinates available for review'}</span>
+                      </div>
+                      <div className="coords-values">
+                        <span>Latitude <strong>{selectedCoordinates.lat.toFixed(6)}°</strong></span>
+                        <span>Longitude <strong>{selectedCoordinates.lng.toFixed(6)}°</strong></span>
+                      </div>
+                    </div>
+                  )}
+
+                  {method === 'map' && !selectedCoordinates && (
+                    <p className="map-coordinates-note">
+                      Coordinates stay blank until you provide them or connect a map provider.
+                    </p>
                   )}
                 </div>
               </div>
             )}
 
+            {statusMessage && (
+              <div className="location-info-note success">
+                <CheckCircle2 size={15} />
+                <span>{statusMessage}</span>
+              </div>
+            )}
+            {locationError && (
+              <div className="location-error-note" role="alert">
+                <AlertCircle size={15} />
+                <span>{locationError}</span>
+              </div>
+            )}
           </div>
         )}
-
       </div>
 
-      {/* Sticky Bottom Actions */}
       {method && (
-        <div className="file-complaint-footer">
+        <div className="file-complaint-footer location-footer">
           {step < 3 ? (
-            <button 
-              className="primary-btn" 
-              style={{ borderRadius: '28px', padding: '16px' }}
+            <button
+              type="button"
+              className="primary-btn"
               onClick={handleConfirmLocation}
+              disabled={!canConfirm}
             >
               <Check size={18} />
               <span>Confirm Location</span>
             </button>
           ) : (
-            <button 
-              className="primary-btn" 
-              style={{ borderRadius: '28px', padding: '16px', background: '#10B981' }}
-              onClick={handleFinalSave}
-            >
+            <button type="button" className="primary-btn location-save-btn" onClick={handleFinalSave}>
               <CheckCircle2 size={18} />
-              <span>Save & Confirm Location ✓</span>
+              <span>Save & Confirm Location</span>
             </button>
           )}
         </div>
       )}
-
     </div>
   );
 }

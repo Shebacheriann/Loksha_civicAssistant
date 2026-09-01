@@ -129,19 +129,57 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
 
   const aiDraft = getAiDraftedComplaint();
 
+  const complaintFlowSections = [
+    { id: 'talk', label: 'Talk' },
+    { id: 'text', label: 'Text' },
+    { id: 'photo', label: 'Photo / Video' },
+    { id: 'location', label: 'Location' }
+  ];
+
+  const ComplaintFlowNav = ({ active }) => (
+    <nav className="complaint-flow-nav" aria-label="Complaint workflow">
+      <button
+        type="button"
+        className={`complaint-flow-nav-item overview ${!active ? 'active' : ''}`}
+        onClick={() => setSubPage(null)}
+      >
+        Overview
+      </button>
+      {complaintFlowSections.map(section => (
+        <button
+          type="button"
+          key={section.id}
+          className={`complaint-flow-nav-item ${active === section.id ? 'active' : ''}`}
+          onClick={() => setSubPage(section.id)}
+        >
+          {section.label}
+          {(
+            (section.id === 'talk' && isTalkDone) ||
+            (section.id === 'text' && isTextDone) ||
+            (section.id === 'photo' && isPhotoDone) ||
+            (section.id === 'location' && isLocationDone)
+          ) && <Check size={14} aria-label="Completed" />}
+        </button>
+      ))}
+    </nav>
+  );
+
   // ----------------------------------------------------
   // SUB-PAGE: FULL-SCREEN LOCATION PAGE (3 Ways)
   // ----------------------------------------------------
   if (subPage === 'location') {
     return (
-      <LocationPage 
-        initialLocation={locationData}
-        onSaveLocation={(locData) => {
-          setLocationData(locData.address);
-          setSubPage(null);
-        }}
-        onBack={() => setSubPage(null)}
-      />
+      <div className="complaint-location-shell">
+        <ComplaintFlowNav active="location" />
+        <LocationPage
+          initialLocation={locationData}
+          onSaveLocation={(locData) => {
+            setLocationData(locData.address);
+            setSubPage(null);
+          }}
+          onBack={() => setSubPage(null)}
+        />
+      </div>
     );
   }
 
@@ -151,6 +189,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   if (subPage === 'view-complaint') {
     return (
       <div className="file-complaint-page full-complaint-view-screen">
+        <ComplaintFlowNav active="view-complaint" />
         <div className="top-nav-bar">
           <button className="back-btn" onClick={() => setSubPage(null)}>
             <ChevronLeft size={20} />
@@ -206,7 +245,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
         </div>
 
         <div className="file-complaint-footer stacked-footer">
-          <button 
+          <button
             className="primary-btn" 
             style={{ borderRadius: '28px', padding: '15px' }}
             onClick={handleSaveAndSubmit}
@@ -215,7 +254,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
             <span>Submit Official Complaint</span>
           </button>
 
-          <button 
+          <button
             className="secondary-outline-btn"
             onClick={() => setSubPage(null)}
           >
@@ -232,6 +271,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   if (subPage === 'status-view' && createdTicket) {
     return (
       <div className="file-complaint-page">
+        <ComplaintFlowNav active="status-view" />
         <div className="top-nav-bar">
           <button className="back-btn" onClick={onBackToHome}>
             <ChevronLeft size={20} />
@@ -275,6 +315,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   if (subPage === 'talk') {
     return (
       <div className="file-complaint-page subpage-view">
+        <ComplaintFlowNav active="talk" />
         <div className="top-nav-bar">
           <button className="back-btn" onClick={() => setSubPage(null)}>
             <ChevronLeft size={20} />
@@ -342,6 +383,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   if (subPage === 'text') {
     return (
       <div className="file-complaint-page subpage-view">
+        <ComplaintFlowNav active="text" />
         <div className="top-nav-bar">
           <button className="back-btn" onClick={() => setSubPage(null)}>
             <ChevronLeft size={20} />
@@ -390,6 +432,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   if (subPage === 'photo') {
     return (
       <div className="file-complaint-page subpage-view">
+        <ComplaintFlowNav active="photo" />
         <div className="top-nav-bar">
           <button className="back-btn" onClick={() => setSubPage(null)}>
             <ChevronLeft size={20} />
@@ -446,6 +489,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   // ----------------------------------------------------
   return (
     <div className="file-complaint-page main-options-screen">
+      <ComplaintFlowNav />
       
       {/* Top Navigation Bar */}
       <div className="top-nav-bar">
@@ -481,7 +525,8 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
         <div className="equally-sized-options-grid">
 
           {/* Option 1: 🎤 Talk */}
-          <div 
+          <button
+            type="button"
             className={`option-equal-card ${isTalkDone ? 'completed' : ''}`}
             onClick={() => {
               setTempVoice(voiceData);
@@ -500,10 +545,11 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
               <h3 className="option-title">Talk</h3>
               <p className="option-sub">Describe the issue</p>
             </div>
-          </div>
+          </button>
 
           {/* Option 2: ✏️ Text (Optional) */}
-          <div 
+          <button
+            type="button"
             className={`option-equal-card ${isTextDone ? 'completed' : ''}`}
             onClick={() => {
               setTempText(textData);
@@ -525,10 +571,11 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
               <h3 className="option-title">Text</h3>
               <p className="option-sub">Add details</p>
             </div>
-          </div>
+          </button>
 
           {/* Option 3: 📷 Photo / Video */}
-          <div 
+          <button
+            type="button"
             className={`option-equal-card ${isPhotoDone ? 'completed' : ''}`}
             onClick={() => {
               setTempPhoto(photoData);
@@ -547,10 +594,11 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
               <h3 className="option-title">Photo / Video</h3>
               <p className="option-sub">Add evidence</p>
             </div>
-          </div>
+          </button>
 
           {/* Option 4: 📍 Location */}
-          <div 
+          <button
+            type="button"
             className={`option-equal-card ${isLocationDone ? 'completed' : ''}`}
             onClick={() => {
               setSubPage('location');
@@ -568,7 +616,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
               <h3 className="option-title">Location</h3>
               <p className="option-sub">{isLocationDone ? 'Location Confirmed' : 'Confirm location'}</p>
             </div>
-          </div>
+          </button>
 
         </div>
 
