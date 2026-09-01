@@ -1,0 +1,1 @@
+- [Imported npm launcher permissions](imported-npm-launchers.md) — imported dependency trees may preserve non-executable node_modules/.bin launchers; run tool entrypoints through Node when needed.
