@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, Sparkles, Bot, User } from 'lucide-react';
+import { X, Send, Sparkles, Bot, User, Minus, Maximize2 } from 'lucide-react';
 
 export default function ChatModal({ isOpen, onClose }) {
   const [messages, setMessages] = useState([
@@ -10,119 +10,137 @@ export default function ChatModal({ isOpen, onClose }) {
     }
   ]);
   const [input, setInput] = useState('');
+  const [isMinimized, setIsMinimized] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSend = (textToSend) => {
-    const text = textToSend || input;
-    if (!text.trim()) return;
+    const text = (textToSend || input).trim();
+    if (!text) return;
 
     const userMsg = { id: Date.now(), sender: 'user', text };
     setMessages(prev => [...prev, userMsg]);
     if (!textToSend) setInput('');
 
-    // Simulate AI response
+    // Simulate the existing local assistant response.
     setTimeout(() => {
-      let botResponse = "I can help with civic issues, complaint tracking, or ward information. What specific detail do you need?";
+      let botResponse = 'I can help with civic issues, complaint tracking, or ward information. What specific detail do you need?';
       const lower = text.toLowerCase();
       if (lower.includes('pothole') || lower.includes('report') || lower.includes('file')) {
         botResponse = "To file a complaint, tap 'File a Complaint' on the home screen. You can select 'Roads & Potholes', attach a photo, and submit instantly!";
       } else if (lower.includes('status') || lower.includes('track') || lower.includes('lk-4092')) {
         botResponse = "Complaint #LK-4092 ('Pothole on MG Road') is currently **In Progress**. The Ward Repair team has inspected the site.";
       } else if (lower.includes('ward') || lower.includes('officer')) {
-        botResponse = "Your assigned Ward Officer for Ward 112 (MG Road Circle) is Mr. Rajesh Kumar (Office Tel: 080-2266-4100).";
+        botResponse = 'Your assigned Ward Officer for Ward 112 (MG Road Circle) is Mr. Rajesh Kumar (Office Tel: 080-2266-4100).';
       }
 
       setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'bot', text: botResponse }]);
     }, 800);
   };
 
+  const renderMessage = (text) => {
+    const parts = text.split('**');
+    return parts.map((part, index) =>
+      index % 2 === 1 ? <strong key={`${part}-${index}`}>{part}</strong> : <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>
+    );
+  };
+
   const suggestions = [
-    "How to report a pothole?",
-    "Status of #LK-4092",
-    "Who is my Ward Officer?"
+    'How to report a pothole?',
+    'Status of #LK-4092',
+    'Who is my Ward Officer?'
   ];
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="bottom-sheet-modal" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90%' }}>
-        <div className="sheet-drag-handle"></div>
-
-        <div className="modal-header" style={{ marginBottom: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '34px',
-              height: '34px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF'
-            }}>
+    <div className="modal-backdrop chat-modal-backdrop" onClick={onClose}>
+      <section
+        className={`chat-assistant-panel ${isMinimized ? 'minimized' : ''}`}
+        onClick={(event) => event.stopPropagation()}
+        aria-label="Loksha AI Assistant"
+      >
+        <header className="chat-assistant-header">
+          <div className="chat-assistant-identity">
+            <div className="chat-avatar">
               <Sparkles size={18} />
             </div>
             <div>
-              <h3 className="modal-title" style={{ fontSize: '16px' }}>Loksha AI Assistant</h3>
-              <p style={{ fontSize: '11.5px', color: '#10B981', fontWeight: '600' }}>● Online</p>
+              <h3>Loksha AI Assistant</h3>
+              <span><i className="chat-online-dot"></i> Online</span>
             </div>
           </div>
-          <button className="close-btn" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Quick Suggestion Chips */}
-        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '10px' }}>
-          {suggestions.map((s, idx) => (
-            <button 
-              key={idx}
-              onClick={() => handleSend(s)}
-              style={{
-                whiteSpace: 'nowrap',
-                background: '#F1F5F9',
-                border: '1px solid #E2E8F0',
-                borderRadius: '16px',
-                padding: '6px 12px',
-                fontSize: '12px',
-                color: '#334155',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
+          <div className="chat-header-actions">
+            <button
+              type="button"
+              className="chat-control-btn"
+              onClick={() => setIsMinimized(previous => !previous)}
+              aria-label={isMinimized ? 'Expand chat' : 'Minimize chat'}
+              title={isMinimized ? 'Expand chat' : 'Minimize chat'}
             >
-              {s}
+              {isMinimized ? <Maximize2 size={16} /> : <Minus size={17} />}
             </button>
-          ))}
-        </div>
+            <button type="button" className="chat-control-btn" onClick={onClose} aria-label="Close chat" title="Close chat">
+              <X size={17} />
+            </button>
+          </div>
+        </header>
 
-        {/* Message Thread */}
-        <div className="chat-container">
-          {messages.map(msg => (
-            <div key={msg.id} className={`chat-bubble ${msg.sender}`}>
-              {msg.text}
-            </div>
-          ))}
-        </div>
-
-        {/* Input bar */}
-        <div className="chat-input-row">
-          <input 
-            type="text" 
-            className="form-input" 
-            placeholder="Ask Loksha AI..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          />
-          <button 
-            className="primary-btn" 
-            style={{ width: '48px', height: '48px', padding: 0, borderRadius: '50%' }}
-            onClick={() => handleSend()}
-          >
-            <Send size={18} />
+        {isMinimized ? (
+          <button type="button" className="chat-minimized-reopen" onClick={() => setIsMinimized(false)}>
+            <Bot size={16} />
+            <span>Open conversation</span>
           </button>
-        </div>
-      </div>
+        ) : (
+          <>
+            <div className="chat-assistant-intro">
+              <span className="chat-intro-icon"><Bot size={15} /></span>
+              <span>Ask about filing a grievance, tracking a ticket, or finding your ward officer.</span>
+            </div>
+
+            <div className="chat-suggestions" aria-label="Suggested questions">
+              {suggestions.map((suggestion) => (
+                <button
+                  type="button"
+                  key={suggestion}
+                  onClick={() => handleSend(suggestion)}
+                  className="chat-suggestion-chip"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+
+            <div className="chat-container" aria-live="polite">
+              {messages.map(message => (
+                <div key={message.id} className={`chat-message-row ${message.sender}`}>
+                  <div className="chat-message-avatar">
+                    {message.sender === 'bot' ? <Sparkles size={12} /> : <User size={12} />}
+                  </div>
+                  <div className="chat-bubble">
+                    {renderMessage(message.text)}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <form className="chat-input-row" onSubmit={(event) => {
+              event.preventDefault();
+              handleSend();
+            }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Ask Loksha AI..."
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                aria-label="Message Loksha AI"
+              />
+              <button type="submit" className="chat-send-btn" aria-label="Send message">
+                <Send size={17} />
+              </button>
+            </form>
+          </>
+        )}
+      </section>
     </div>
   );
 }

@@ -1,0 +1,124 @@
+Continue working on the existing Loksha Civic Grievance Portal. Do NOT rebuild the project from scratch and do NOT remove or break any existing functionality. Make the following refinements carefully.
+
+1. COMPLAINT SUBMISSION / CONFIRMATION / VIEW COMPLAINT
+
+Redesign the complaint confirmation / "Official Complaint View" screen so it looks like a real, professional civic grievance submission rather than a block of text.
+
+It should clearly present the complaint in a structured format using cards, sections, labels and proper spacing.
+
+Show the complaint information in this order:
+
+- Complaint ID
+- Complaint status
+- Subject / Complaint title
+- Complaint description / body
+- Location
+  - Address
+  - Ward / area if available
+  - GPS coordinates if available
+  - Map preview if available
+- Photo / Video Evidence
+  - Show uploaded images as thumbnails/cards
+  - If no evidence is uploaded, clearly show "No evidence attached"
+- Responsible Department / Authority
+- Date and time submitted
+
+Make "Subject", "Description", "Location", "Evidence", and "Responsible Department" visually distinct sections.
+
+Use a clean modern card-based layout similar to current civic service / government complaint portals.
+
+Do not display all information as one continuous paragraph.
+
+The primary "Submit Official Complaint" button should be prominent and properly aligned with the secondary "Edit Complaint Inputs" button.
+
+Make the page responsive for desktop and mobile.
+
+2. OTP INPUT
+
+Fix the OTP input behaviour on the login/OTP page.
+
+Currently the user has to click every individual OTP box.
+
+Change it so:
+
+- The OTP still visually appears as separate individual boxes.
+- The user can type continuously.
+- Each number automatically moves/fills into the next box.
+- Pasting a complete OTP should automatically distribute the digits across all boxes.
+- Backspace should move to the previous box when appropriate.
+- Only numeric digits should be accepted.
+- The OTP should work properly on both desktop and mobile.
+- Do not remove the existing OTP verification functionality.
+
+3. MOBILE NUMBER LOGIN PAGE TEXT
+
+Change this text:
+
+"Quick Civic Access
+File potholes, streetlights, and sanitation issues in under 30 seconds."
+
+Remove the "30 seconds" claim.
+
+Use:
+
+"Quick Civic Access
+File potholes, streetlights, and sanitation issues in just a few simple steps."
+
+Keep the existing visual design and avatar/illustration.
+
+4. CHAT WITH LOKSHA
+
+Redesign the "Chat with Loksha" interface to look like a polished, modern AI assistant used on a real website.
+
+The current bottom-sheet/chat layout feels too large and unfinished.
+
+Create a professional chat interface with:
+
+- Proper chat header containing Loksha AI Assistant name
+- Online status
+- AI avatar/icon
+- Minimize/close controls
+- Proper conversation/message area
+- User messages aligned to the right
+- AI messages aligned to the left
+- Attractive but minimal message bubbles
+- Suggested question chips
+- Clean text input field at the bottom
+- Send button inside/next to the input
+- Proper spacing and padding
+- Chat area should have a sensible maximum height
+- It should NOT cover almost the entire screen unnecessarily
+- On desktop, make it feel like a modern floating AI assistant/chat panel.
+- On mobile, make it responsive and comfortable to use.
+- Add subtle borders, shadows, rounded corners and hierarchy.
+- Keep the Loksha blue/white visual identity.
+
+Use modern AI chat UI patterns as inspiration, but keep the Loksha branding.
+
+5. OVERALL UI QUALITY
+
+Go through ALL existing pages after making these changes.
+
+Fix any remaining:
+- oversized buttons
+- poorly aligned buttons
+- inconsistent spacing
+- text that looks like raw/unformatted HTML
+- inconsistent font sizes
+- awkward card widths
+- buttons that stretch unnecessarily
+- mobile responsiveness issues
+- inconsistent border radius
+- inconsistent icon alignment
+
+Keep the existing Loksha navigation/header design.
+
+Important:
+- Do not change the application's core functionality.
+- Do not remove existing pages.
+- Do not replace working components unnecessarily.
+- Do not introduce fake backend functionality.
+- Preserve the existing routing and data flow.
+- Make the result look like a polished production-ready civic grievance platform, not a prototype.
+
+After implementing everything, run the application and check every affected screen in both desktop and mobile preview.

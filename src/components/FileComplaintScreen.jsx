@@ -15,7 +15,8 @@ import {
   Bookmark,
   Send,
   Calendar,
-  FileText
+  FileText,
+  Building2
 } from 'lucide-react';
 
 export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
@@ -27,6 +28,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   const [textData, setTextData] = useState('');
   const [photoData, setPhotoData] = useState(null);
   const [locationData, setLocationData] = useState('');
+  const [locationDetails, setLocationDetails] = useState(null);
 
   // Sub-page temporary editing state
   const [isRecording, setIsRecording] = useState(false);
@@ -97,7 +99,8 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
       photo: photoData,
       voice: voiceData,
       text: textData,
-      ward: locationData ? 'Ward 112 Public Works' : 'Unassigned Ward'
+      ward: locationData ? 'Ward 112 Public Works' : 'Not specified',
+      locationDetails
     };
   };
 
@@ -175,6 +178,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
           initialLocation={locationData}
           onSaveLocation={(locData) => {
             setLocationData(locData.address);
+            setLocationDetails(locData);
             setSubPage(null);
           }}
           onBack={() => setSubPage(null)}
@@ -199,66 +203,142 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
         </div>
 
         <div className="complaint-doc-body">
-          <div className="doc-header-card">
-            <div className="doc-badge-row">
-              <span className="doc-draft-id">{aiDraft.draftId}</span>
+          <div className="complaint-document-header">
+            <div className="document-header-topline">
+              <div>
+                <span className="document-eyebrow">Citizen submission</span>
+                <span className="doc-draft-id">{aiDraft.draftId}</span>
+              </div>
+              <span className="status-pill draft">
+                <span className="status-dot"></span> Draft
+              </span>
+            </div>
+            <div className="document-header-title-row">
+              <div>
+                <h1 className="doc-subject-title">Official Complaint View</h1>
+                <p className="document-header-subtitle">Review the details before sending this grievance to the responsible authority.</p>
+              </div>
               <span className="ai-verified-tag">
                 <Sparkles size={13} /> Loksha AI Drafted
               </span>
             </div>
-            <h2 className="doc-subject-title">{aiDraft.subject}</h2>
-            <div className="doc-date-row">
-              <Calendar size={13} />
-              <span>{aiDraft.date}</span>
-            </div>
           </div>
 
-          <div className="doc-section-card">
-            <h3 className="doc-section-label">Official Grievance Statement</h3>
+          <section className="doc-section-card">
+            <div className="doc-section-heading">
+              <span className="doc-section-number">01</span>
+              <div>
+                <span className="doc-section-label">Subject</span>
+                <p className="doc-section-hint">Official complaint title</p>
+              </div>
+            </div>
+            <h2 className="doc-content-title">{aiDraft.subject}</h2>
+          </section>
+
+          <section className="doc-section-card">
+            <div className="doc-section-heading">
+              <span className="doc-section-number">02</span>
+              <div>
+                <span className="doc-section-label">Description</span>
+                <p className="doc-section-hint">Statement prepared from your inputs</p>
+              </div>
+            </div>
             <p className="doc-text-body">{aiDraft.officialDesc}</p>
-          </div>
+          </section>
 
-          <div className="doc-section-card">
-            <h3 className="doc-section-label">Location Information</h3>
-            <div className="doc-meta-row">
-              <MapPin size={16} color="#10B981" />
-              <span>{aiDraft.location}</span>
+          <section className="doc-section-card">
+            <div className="doc-section-heading">
+              <span className="doc-section-number">03</span>
+              <div>
+                <span className="doc-section-label">Location</span>
+                <p className="doc-section-hint">Where the issue was reported</p>
+              </div>
             </div>
-          </div>
-
-          <div className="doc-section-card">
-            <h3 className="doc-section-label">Photo / Video Evidence</h3>
-            {aiDraft.photo ? (
-              <div className="doc-photo-box">
-                <img src={aiDraft.photo} alt="Evidence" className="doc-img" />
-                <span className="photo-attached-tag">✓ 1 Evidence File Attached</span>
+            <div className="doc-detail-grid">
+              <div className="doc-detail-item wide">
+                <span className="doc-detail-label">Address</span>
+                <strong><MapPin size={15} /> {aiDraft.location}</strong>
+              </div>
+              <div className="doc-detail-item">
+                <span className="doc-detail-label">Ward / area</span>
+                <strong>{aiDraft.ward}</strong>
+              </div>
+              {aiDraft.locationDetails?.lat !== null && aiDraft.locationDetails?.lat !== undefined && (
+                <div className="doc-detail-item">
+                  <span className="doc-detail-label">GPS coordinates</span>
+                  <strong>
+                    {aiDraft.locationDetails.lat.toFixed(6)}, {aiDraft.locationDetails.lng.toFixed(6)}
+                  </strong>
+                </div>
+              )}
+            </div>
+            {aiDraft.locationDetails?.mapPreview ? (
+              <div className="document-map-preview">
+                <div className="document-map-grid"></div>
+                <div className="document-map-road road-one"></div>
+                <div className="document-map-road road-two"></div>
+                <MapPin size={26} className="document-map-pin" />
+                <span>Map preview captured during location selection</span>
               </div>
             ) : (
-              <p className="doc-empty-text">No photo evidence attached.</p>
+              <p className="doc-empty-text inline-empty">Map preview not available for this location.</p>
             )}
-          </div>
+          </section>
 
-          <div className="doc-section-card ward-info">
-            <h3 className="doc-section-label">Assigned Department</h3>
-            <p className="ward-name-text">🏛️ {aiDraft.ward}</p>
+          <section className="doc-section-card">
+            <div className="doc-section-heading">
+              <span className="doc-section-number">04</span>
+              <div>
+                <span className="doc-section-label">Photo / Video Evidence</span>
+                <p className="doc-section-hint">Files attached to support the report</p>
+              </div>
+            </div>
+            {aiDraft.photo ? (
+              <div className="document-evidence-grid">
+                <div className="document-evidence-card">
+                  <img src={aiDraft.photo} alt="Complaint evidence" className="doc-img" />
+                  <span className="photo-attached-tag">Evidence attached</span>
+                </div>
+              </div>
+            ) : (
+              <p className="doc-empty-text inline-empty">No evidence attached</p>
+            )}
+          </section>
+
+          <section className="doc-section-card">
+            <div className="doc-section-heading">
+              <span className="doc-section-number">05</span>
+              <div>
+                <span className="doc-section-label">Responsible Department / Authority</span>
+                <p className="doc-section-hint">Suggested routing destination</p>
+              </div>
+            </div>
+            <div className="department-callout">
+              <div className="department-icon"><Building2 size={20} /></div>
+              <div>
+                <strong>{aiDraft.ward}</strong>
+                <span>Assigned based on the complaint location and category.</span>
+              </div>
+            </div>
+          </section>
+
+          <div className="document-submission-meta">
+            <Calendar size={16} />
+            <div>
+              <span>Prepared date and time</span>
+              <strong>{aiDraft.date}</strong>
+            </div>
           </div>
         </div>
 
-        <div className="file-complaint-footer stacked-footer">
-          <button
-            className="primary-btn" 
-            style={{ borderRadius: '28px', padding: '15px' }}
-            onClick={handleSaveAndSubmit}
-          >
+        <div className="file-complaint-footer document-action-footer">
+          <button className="secondary-outline-btn document-edit-btn" onClick={() => setSubPage(null)}>
+            <Edit3 size={16} />
+            Edit Complaint Inputs
+          </button>
+          <button className="primary-btn document-submit-btn" onClick={handleSaveAndSubmit}>
             <Send size={18} />
             <span>Submit Official Complaint</span>
-          </button>
-
-          <button
-            className="secondary-outline-btn"
-            onClick={() => setSubPage(null)}
-          >
-            Edit Complaint Inputs
           </button>
         </div>
       </div>

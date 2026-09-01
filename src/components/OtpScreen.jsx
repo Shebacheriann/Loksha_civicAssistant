@@ -47,8 +47,8 @@ export default function OtpScreen({ phoneNumber = '9876543210', onVerifySuccess,
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData('text').trim();
-    if (/^\d{6}$/.test(pasteData)) {
+    const pasteData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasteData.length === 6) {
       setOtp(pasteData.split(''));
       if (inputRefs.current[5]) inputRefs.current[5].focus();
     }
@@ -122,7 +122,8 @@ export default function OtpScreen({ phoneNumber = '9876543210', onVerifySuccess,
                 value={digit}
                 onChange={(e) => handleChange(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
-                autoComplete="off"
+                onFocus={(e) => e.target.select()}
+                autoComplete={idx === 0 ? 'one-time-code' : 'off'}
               />
             ))}
           </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import FileComplaintScreen from './FileComplaintScreen';
 import NotificationDrawer from './Modals/NotificationDrawer';
 import ProfileDrawer from './Modals/ProfileDrawer';
@@ -51,6 +51,7 @@ export default function DesktopLayout({
   const [loginPhoneInput, setLoginPhoneInput] = useState('9876543210');
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
   const [signupForm, setSignupForm] = useState({ fullName: '', mobile: '', email: '' });
+  const desktopOtpRefs = useRef([]);
 
   // Filter complaints for Track page
   const filteredComplaints = complaints.filter(c => {
@@ -64,14 +65,44 @@ export default function DesktopLayout({
   });
 
   const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
+    const digits = value.replace(/\D/g, '');
+    if (!digits && value) return;
+
     const newOtp = [...otpDigits];
-    newOtp[index] = value.slice(-1);
-    setOtpDigits(newOtp);
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`desktop-otp-${index + 1}`);
-      if (nextInput) nextInput.focus();
+    if (digits.length > 1) {
+      digits.slice(0, 6 - index).split('').forEach((digit, offset) => {
+        newOtp[index + offset] = digit;
+      });
+      setOtpDigits(newOtp);
+      const nextIndex = Math.min(index + digits.length, 5);
+      desktopOtpRefs.current[nextIndex]?.focus();
+      return;
     }
+
+    newOtp[index] = digits;
+    setOtpDigits(newOtp);
+    if (digits && index < 5) {
+      desktopOtpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, event) => {
+    if (event.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      desktopOtpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (index, event) => {
+    event.preventDefault();
+    const digits = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6 - index);
+    if (!digits) return;
+
+    const newOtp = [...otpDigits];
+    digits.split('').forEach((digit, offset) => {
+      newOtp[index + offset] = digit;
+    });
+    setOtpDigits(newOtp);
+    desktopOtpRefs.current[Math.min(index + digits.length, 5)]?.focus();
   };
 
   // ----------------------------------------------------
@@ -224,7 +255,7 @@ export default function DesktopLayout({
             <Sparkles size={16} /> Loksha Auth
           </div>
           <h2>Enter your mobile number</h2>
-          <p>We'll send you a 6-digit OTP code to verify your mobile number and log you in.</p>
+            <p>We'll send you a 6-digit OTP code to verify your mobile number and log you in.</p>
 
           <form 
             onSubmit={(e) => {
@@ -269,7 +300,7 @@ export default function DesktopLayout({
           <div className="auth-visual-box">
             <img src="/loksha_mascot.jpg" alt="Loksha AI" />
             <h3>Quick Civic Access</h3>
-            <p>File potholes, streetlights, and sanitation issues in under 30 seconds.</p>
+             <p>File potholes, streetlights, and sanitation issues in just a few simple steps.</p>
           </div>
         </div>
 
@@ -301,11 +332,18 @@ export default function DesktopLayout({
               <input 
                 key={idx}
                 id={`desktop-otp-${idx}`}
+                ref={(element) => {
+                  desktopOtpRefs.current[idx] = element;
+                }}
                 type="text"
+                inputMode="numeric"
                 maxLength={1}
                 className={`otp-digit-box ${digit ? 'filled' : ''}`}
                 value={digit}
                 onChange={(e) => handleOtpChange(idx, e.target.value)}
+                onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                onPaste={(e) => handleOtpPaste(idx, e)}
+                autoComplete={idx === 0 ? 'one-time-code' : 'off'}
               />
             ))}
           </div>
