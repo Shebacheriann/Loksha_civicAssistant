@@ -2930,6 +2930,16 @@ textarea:focus-visible {
   font-weight: 800;
 }
 
+.document-evidence-name {
+  display: block;
+  overflow: hidden;
+  padding: 7px 10px 9px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .doc-empty-text {
   color: var(--text-muted);
   font-size: 13px;
@@ -3391,5 +3401,326 @@ textarea:focus-visible {
 
   .chat-assistant-header {
     min-height: 66px;
+  }
+}
+
+/* ==========================================================================
+   MICROPHONE & PHOTO EVIDENCE CAPTURE
+   ========================================================================== */
+
+.permission-message {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  width: min(100%, 560px);
+  margin: 18px auto 0;
+  padding: 12px 14px;
+  border: 1px solid #FECACA;
+  border-radius: 13px;
+  color: #991B1B;
+  background: #FEF2F2;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.permission-message > svg {
+  color: #DC2626;
+}
+
+.permission-message button {
+  padding: 6px 9px;
+  border: 1px solid #FCA5A5;
+  border-radius: 8px;
+  color: #991B1B;
+  background: #FFFFFF;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.permission-message button:hover {
+  background: #FFF7F7;
+}
+
+.photo-upload-section {
+  width: min(100%, 560px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 26px auto 4px;
+  padding: 28px 22px;
+  border: 1px dashed #CBD5E1;
+  border-radius: 20px;
+  background: #F8FAFC;
+}
+
+.photo-capture-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 17px;
+  border: 1px solid #F59E0B;
+  border-radius: 12px;
+  color: #92400E;
+  background: #FFFBEB;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  transition: all var(--transition-fast);
+}
+
+.photo-capture-btn:hover {
+  border-color: #D97706;
+  background: #FEF3C7;
+}
+
+.photo-capture-btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.photo-capture-btn-large {
+  width: min(100%, 360px);
+  justify-content: flex-start;
+  min-height: 72px;
+  padding: 10px 15px;
+  text-align: left;
+}
+
+.photo-action-icon {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  color: #D97706;
+  background: #FEF3C7;
+}
+
+.photo-action-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.photo-action-copy strong {
+  color: #78350F;
+  font-size: 13px;
+}
+
+.photo-action-copy small {
+  color: #A16207;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.photo-upload-divider {
+  width: min(100%, 360px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 9px;
+  color: var(--text-light);
+  font-size: 11px;
+}
+
+.photo-upload-divider::before,
+.photo-upload-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: #E2E8F0;
+}
+
+.photo-upload-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 8px;
+  color: var(--accent-primary);
+  background: transparent;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.photo-upload-link:hover {
+  background: #DBEAFE;
+}
+
+.camera-capture-card {
+  width: min(100%, 560px);
+  margin: 26px auto 4px;
+  padding: 12px;
+  border: 1px solid #CBD5E1;
+  border-radius: 18px;
+  background: #0F172A;
+}
+
+.camera-video-preview {
+  display: block;
+  width: 100%;
+  max-height: 330px;
+  border-radius: 11px;
+  background: #020617;
+  object-fit: cover;
+}
+
+.camera-capture-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding-top: 12px;
+}
+
+.camera-capture-actions .secondary-outline-btn {
+  border-color: #475569;
+  color: #E2E8F0;
+  background: transparent;
+}
+
+.camera-capture-actions .secondary-outline-btn:hover {
+  border-color: #94A3B8;
+  color: #FFFFFF;
+  background: #1E293B;
+}
+
+.photo-preview-container {
+  width: min(100%, 560px);
+  margin: 26px auto 4px;
+  padding: 14px;
+  border: 1px solid #CBD5E1;
+  border-radius: 18px;
+  background: #F8FAFC;
+}
+
+.photo-preview-image-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #E2E8F0;
+}
+
+.full-photo-preview {
+  display: block;
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+}
+
+.photo-preview-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #FFFFFF;
+  background: #10B981;
+}
+
+.photo-preview-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 2px 5px;
+}
+
+.photo-preview-meta strong,
+.photo-preview-meta span {
+  display: block;
+}
+
+.photo-preview-meta strong {
+  color: var(--text-main);
+  font-size: 12.5px;
+}
+
+.photo-preview-meta span {
+  max-width: 320px;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delete-photo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  color: #B91C1C;
+  background: #FFFFFF;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.delete-photo-btn:hover {
+  background: #FEF2F2;
+}
+
+.photo-replace-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 12px;
+  padding-top: 4px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.visually-hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .permission-message {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .permission-message button {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .photo-preview-meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .photo-replace-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .camera-capture-actions {
+    justify-content: stretch;
+  }
+
+  .camera-capture-actions > * {
+    flex: 1;
   }
 }

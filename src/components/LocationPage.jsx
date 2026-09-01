@@ -187,7 +187,8 @@ export default function LocationPage({ initialLocation, onSaveLocation, onBack }
       lat: selectedCoordinates?.lat ?? null,
       lng: selectedCoordinates?.lng ?? null,
       isConfirmed: true,
-      source: method
+      source: method,
+      mapPreview: Boolean(mapPoint)
     });
   };
 

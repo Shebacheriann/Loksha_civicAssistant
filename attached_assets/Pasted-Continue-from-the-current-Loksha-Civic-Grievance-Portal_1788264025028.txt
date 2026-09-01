@@ -1,0 +1,156 @@
+Continue from the current Loksha Civic Grievance Portal. Do NOT rebuild the project. Fix only the following issues and preserve all existing functionality.
+
+1. PHONE NUMBER + OTP INPUT — IMPORTANT
+
+The OTP input is still incorrect.
+
+Currently, the user has to click each individual OTP box before entering a digit.
+
+Fix the OTP component so that:
+
+- The OTP is visually displayed as separate boxes.
+- The user can click/focus the OTP area once and type continuously, e.g. 123456.
+- Each digit must automatically appear in the next box.
+- The cursor/focus should automatically move to the next box after every digit.
+- Pasting "123456" must automatically populate all 6 boxes.
+- Backspace must move naturally to the previous box.
+- Only numeric digits should be accepted.
+- This must work on desktop AND mobile keyboards.
+- The user should NEVER have to manually click each OTP box.
+
+Also check the phone-number input on the first login page.
+
+Make the phone number field look like a proper modern mobile-number input:
+- Properly sized input field
+- Clear country code (+91)
+- Proper spacing
+- Numeric keyboard on mobile
+- Correct alignment and typography
+- Do not allow the input to look like an unstyled/raw HTML field.
+
+Test the complete flow: phone number → OTP → continuous typing → verification.
+
+2. SPEAK TO LOKSHA TEXT
+
+On the "Speak to Loksha" page, change:
+
+"Tap the mic button to record what needs fixing. Loksha will convert it into a clear statement."
+
+to:
+
+"Tap the mic button to describe what needs fixing. Loksha will turn your words into a clear complaint."
+
+Keep the rest of the page unchanged unless needed for layout consistency.
+
+3. MICROPHONE PERMISSION
+
+When the user chooses to record a complaint using the microphone:
+
+- Request browser microphone permission at the appropriate moment.
+- Ask for microphone access only when the user actually starts recording, not immediately when the page loads.
+- If permission is granted, start recording normally.
+- If permission is denied, show a clear and friendly message explaining that microphone access is needed to record the complaint and provide an option to try again.
+- Do not crash or leave the page in a broken state.
+
+Make sure this uses the browser's actual microphone permission mechanism rather than just displaying a fake permission message.
+
+4. PHOTO PAGE — PHOTOS ONLY
+
+Change the section currently called:
+
+"Photo / Video Evidence"
+
+to:
+
+"Photo Evidence"
+
+This feature should ONLY support photos.
+
+Do not show video as an option.
+
+The page should clearly explain something like:
+
+"Add a photo to help officers understand and verify the issue."
+
+Create a clean, properly structured photo-upload area.
+
+Instead of the current camera icon sitting on the left with unformatted text, create a proper centered/contained upload section.
+
+For example:
+
+[ Camera icon ]
+
+Take a Photo
+
+Use your camera to capture evidence
+
+Then provide a smaller secondary option underneath:
+
+"Upload from device"
+
+This should be a subtle highlighted text link or small outlined button, NOT a huge full-width button.
+
+Clicking "Upload from device" should open the device's file picker and allow the user to select an image.
+
+Accept common image formats such as:
+- JPG/JPEG
+- PNG
+- WEBP
+
+5. CAMERA PERMISSION
+
+If the user chooses "Take a Photo" / camera capture:
+
+- Request camera permission only when they actually choose to use the camera.
+- Use the browser/device camera permission.
+- If permission is granted, allow them to capture a photo.
+- If permission is denied, show a clear message and allow them to retry.
+- Do NOT request camera permission simply by opening the Photo Evidence page.
+
+6. PHOTO PREVIEW
+
+After a photo is captured or uploaded:
+
+- Show a clean preview thumbnail.
+- Show the filename if appropriate.
+- Provide a clear "Remove" / delete option.
+- Allow the user to replace the image.
+- Keep the photo associated with the complaint data so it appears later in the complaint confirmation/view screen.
+
+7. UI / LAYOUT
+
+Use the existing Loksha visual style.
+
+The Talk and Photo pages should feel like parts of the same complaint workflow.
+
+Keep:
+- Top progress/sub-navigation: Overview → Talk → Text → Photo → Location
+- Consistent active-state styling
+- Back button
+- Proper spacing
+- Modern typography
+- Rounded cards/containers
+- Responsive desktop/mobile layout
+
+Avoid:
+- Raw HTML-looking buttons
+- Icons sitting beside text without containers
+- Huge unnecessary full-width buttons
+- Unformatted text
+- Excessive empty space
+
+IMPORTANT:
+Do not change the application's existing routing, backend, complaint data flow, or other working pages.
+
+After making the changes, test:
+1. Phone number entry
+2. OTP continuous typing
+3. OTP paste
+4. Microphone permission + recording
+5. Camera permission + photo capture
+6. Upload photo from device
+7. Photo preview/removal
+8. Navigation between Talk, Text, Photo and Location
+9. Desktop and mobile layouts.
+
+Only make changes necessary for the above requirements.

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import LocationPage from './LocationPage';
 import { 
   ChevronLeft, 
@@ -16,7 +16,12 @@ import {
   Send,
   Calendar,
   FileText,
-  Building2
+  Building2,
+  Upload,
+  StopCircle,
+  RotateCcw,
+  X,
+  AlertCircle
 } from 'lucide-react';
 
 export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
@@ -27,6 +32,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   const [voiceData, setVoiceData] = useState('');
   const [textData, setTextData] = useState('');
   const [photoData, setPhotoData] = useState(null);
+  const [photoFileName, setPhotoFileName] = useState('');
   const [locationData, setLocationData] = useState('');
   const [locationDetails, setLocationDetails] = useState(null);
 
@@ -35,9 +41,21 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   const [tempVoice, setTempVoice] = useState('');
   const [tempText, setTempText] = useState('');
   const [tempPhoto, setTempPhoto] = useState(null);
+  const [tempPhotoName, setTempPhotoName] = useState('');
 
   // Submitted ticket state
   const [createdTicket, setCreatedTicket] = useState(null);
+  const [micError, setMicError] = useState('');
+  const [cameraError, setCameraError] = useState('');
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isCameraStarting, setIsCameraStarting] = useState(false);
+
+  const audioStreamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordingTimeoutRef = useRef(null);
+  const videoRef = useRef(null);
+  const cameraStreamRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Checkmark indicators (active ONLY when user enters/confirms data)
   const isTalkDone = Boolean(voiceData);
@@ -48,18 +66,154 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   const completedCount = (isTalkDone ? 1 : 0) + (isTextDone ? 1 : 0) + (isPhotoDone ? 1 : 0) + (isLocationDone ? 1 : 0);
   const progressPercent = (completedCount / 4) * 100;
 
-  // Toggle Voice Recording in Talk Sub-Page
-  const handleToggleRecord = () => {
-    if (!isRecording) {
-      setIsRecording(true);
-      setTimeout(() => {
-        setIsRecording(false);
-        setTempVoice('Large hazardous pothole and broken streetlight near Metro Station Gate 2.');
-      }, 2500);
+  const stopAudioStream = () => {
+    audioStreamRef.current?.getTracks().forEach(track => track.stop());
+    audioStreamRef.current = null;
+  };
+
+  const stopRecording = () => {
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.stop();
     } else {
+      stopAudioStream();
+      setTempVoice('Audio captured successfully. Add any extra details in the Text step if needed.');
+    }
+    setIsRecording(false);
+  };
+
+  // Request microphone access only after the user presses the record button.
+  const handleToggleRecord = async () => {
+    if (isRecording) {
+      stopRecording();
+      return;
+    }
+
+    setMicError('');
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setMicError('Microphone access is not available in this browser. You can add details using the Text step instead.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+
+      if (typeof MediaRecorder !== 'undefined') {
+        const recorder = new MediaRecorder(stream);
+        recorder.onstop = () => {
+          stopAudioStream();
+          mediaRecorderRef.current = null;
+          setTempVoice('Audio captured successfully. Add any extra details in the Text step if needed.');
+        };
+        recorder.start();
+        mediaRecorderRef.current = recorder;
+      }
+
+      setIsRecording(true);
+      recordingTimeoutRef.current = setTimeout(stopRecording, 30000);
+    } catch (error) {
       setIsRecording(false);
+      stopAudioStream();
+      setMicError(
+        error?.name === 'NotAllowedError'
+          ? 'Microphone access is needed to record your complaint. Allow access in your browser and try again.'
+          : 'We could not access your microphone. Please check your device settings and try again.'
+      );
     }
   };
+
+  const stopCameraStream = () => {
+    cameraStreamRef.current?.getTracks().forEach(track => track.stop());
+    cameraStreamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  };
+
+  const handleOpenCamera = async () => {
+    setCameraError('');
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError('Camera access is not available in this browser. Please upload a photo from your device instead.');
+      return;
+    }
+
+    setIsCameraStarting(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false
+      });
+      cameraStreamRef.current = stream;
+      setIsCameraOpen(true);
+      setIsCameraStarting(false);
+      requestAnimationFrame(() => {
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      });
+    } catch (error) {
+      setIsCameraStarting(false);
+      stopCameraStream();
+      setCameraError(
+        error?.name === 'NotAllowedError'
+          ? 'Camera access is needed to take a photo. Allow access in your browser and try again.'
+          : 'We could not access your camera. Please check your device settings and try again.'
+      );
+    }
+  };
+
+  const handleCloseCamera = () => {
+    stopCameraStream();
+    setIsCameraOpen(false);
+  };
+
+  const handleCapturePhoto = () => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth || !video.videoHeight) {
+      setCameraError('The camera is still starting. Please wait a moment and try again.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    setTempPhoto(canvas.toDataURL('image/jpeg', 0.88));
+    setTempPhotoName(`camera-capture-${new Date().toISOString().slice(0, 10)}.jpg`);
+    handleCloseCamera();
+  };
+
+  const handlePhotoFileChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    const hasSupportedType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+      || /\.(jpe?g|png|webp)$/i.test(file.name);
+    if (!hasSupportedType) {
+      setCameraError('Please choose a JPG, PNG, or WEBP image.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setTempPhoto(reader.result);
+      setTempPhotoName(file.name);
+      setCameraError('');
+    };
+    reader.onerror = () => setCameraError('We could not read that image. Please choose another file.');
+    reader.readAsDataURL(file);
+  };
+
+  useEffect(() => {
+    return () => {
+      stopAudioStream();
+      stopCameraStream();
+      if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
+    };
+  }, []);
 
   // Generate AI-Drafted Official Complaint object
   const getAiDraftedComplaint = () => {
@@ -97,6 +251,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
       officialDesc,
       location: locationData || 'Not provided',
       photo: photoData,
+      photoName: photoFileName,
       voice: voiceData,
       text: textData,
       ward: locationData ? 'Ward 112 Public Works' : 'Not specified',
@@ -135,7 +290,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
   const complaintFlowSections = [
     { id: 'talk', label: 'Talk' },
     { id: 'text', label: 'Text' },
-    { id: 'photo', label: 'Photo / Video' },
+    { id: 'photo', label: 'Photo' },
     { id: 'location', label: 'Location' }
   ];
 
@@ -289,7 +444,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
             <div className="doc-section-heading">
               <span className="doc-section-number">04</span>
               <div>
-                <span className="doc-section-label">Photo / Video Evidence</span>
+                <span className="doc-section-label">Photo Evidence</span>
                 <p className="doc-section-hint">Files attached to support the report</p>
               </div>
             </div>
@@ -298,6 +453,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
                 <div className="document-evidence-card">
                   <img src={aiDraft.photo} alt="Complaint evidence" className="doc-img" />
                   <span className="photo-attached-tag">Evidence attached</span>
+                  {aiDraft.photoName && <span className="document-evidence-name">{aiDraft.photoName}</span>}
                 </div>
               </div>
             ) : (
@@ -410,7 +566,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
               <Mic size={24} />
             </div>
             <h2>Speak to Loksha</h2>
-            <p>Tap the mic button to record what needs fixing. Loksha will convert it into a clear statement.</p>
+            <p>Tap the mic button to describe what needs fixing. Loksha will turn your words into a clear complaint.</p>
           </div>
 
           <div className="mic-recorder-zone">
@@ -418,7 +574,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
               className={`giant-mic-btn ${isRecording ? 'recording' : ''}`}
               onClick={handleToggleRecord}
             >
-              <Mic size={36} />
+              {isRecording ? <StopCircle size={36} /> : <Mic size={36} />}
             </button>
 
             {isRecording && (
@@ -436,9 +592,17 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
             </span>
           </div>
 
+          {micError && (
+            <div className="permission-message error" role="alert">
+              <AlertCircle size={17} />
+              <span>{micError}</span>
+              <button type="button" onClick={handleToggleRecord}>Try again</button>
+            </div>
+          )}
+
           {tempVoice && !isRecording && (
             <div className="transcript-card">
-              <span className="transcript-label">Recorded Description:</span>
+              <span className="transcript-label">Recording ready:</span>
               <p>"{tempVoice}"</p>
             </div>
           )}
@@ -526,26 +690,83 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
             <div className="subpage-icon-badge photo">
               <Camera size={24} />
             </div>
-            <h2>Photo or Video Evidence</h2>
-            <p>Attach visual evidence to help officers identify and resolve the problem.</p>
+            <h2>Photo Evidence</h2>
+            <p>Add a photo to help officers understand and verify the issue.</p>
           </div>
 
-          {tempPhoto ? (
-            <div className="photo-preview-container">
-              <img src={tempPhoto} alt="Evidence" className="full-photo-preview" />
-              <button className="delete-photo-btn" onClick={() => setTempPhoto(null)}>
-                <Trash2 size={16} /> Remove Photo
-              </button>
-            </div>
-          ) : (
-            <div 
-              className="upload-dropzone" 
-              onClick={() => setTempPhoto('https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80')}
-            >
-              <Camera size={38} color="#D97706" />
-              <span>Tap to Capture or Upload Photo</span>
+          {cameraError && (
+            <div className="permission-message error" role="alert">
+              <AlertCircle size={17} />
+              <span>{cameraError}</span>
+              {!isCameraOpen && <button type="button" onClick={handleOpenCamera}>Try again</button>}
             </div>
           )}
+
+          {isCameraOpen ? (
+            <div className="camera-capture-card">
+              <video ref={videoRef} className="camera-video-preview" autoPlay playsInline muted />
+              <div className="camera-capture-actions">
+                <button type="button" className="secondary-outline-btn" onClick={handleCloseCamera}>
+                  <X size={16} /> Cancel
+                </button>
+                <button type="button" className="photo-capture-btn" onClick={handleCapturePhoto}>
+                  <Camera size={17} /> Capture Photo
+                </button>
+              </div>
+            </div>
+          ) : tempPhoto ? (
+            <div className="photo-preview-container">
+              <div className="photo-preview-image-wrap">
+                <img src={tempPhoto} alt="Selected complaint evidence" className="full-photo-preview" />
+                <span className="photo-preview-check"><Check size={14} /></span>
+              </div>
+              <div className="photo-preview-meta">
+                <div>
+                  <strong>Photo ready to attach</strong>
+                  <span>{tempPhotoName || 'Selected image'}</span>
+                </div>
+                <button
+                  type="button"
+                  className="delete-photo-btn"
+                  onClick={() => {
+                    setTempPhoto(null);
+                    setTempPhotoName('');
+                  }}
+                >
+                  <Trash2 size={15} /> Remove
+                </button>
+              </div>
+              <div className="photo-replace-actions">
+                <button type="button" className="photo-upload-link" onClick={() => fileInputRef.current?.click()}>
+                  <Upload size={15} /> Upload a different photo
+                </button>
+                <button type="button" className="photo-upload-link" onClick={handleOpenCamera}>
+                  <RotateCcw size={15} /> Take another photo
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="photo-upload-section">
+              <button type="button" className="photo-capture-btn photo-capture-btn-large" onClick={handleOpenCamera} disabled={isCameraStarting}>
+                <span className="photo-action-icon"><Camera size={25} /></span>
+                <span className="photo-action-copy">
+                  <strong>{isCameraStarting ? 'Opening camera…' : 'Take a Photo'}</strong>
+                  <small>Use your camera to capture evidence</small>
+                </span>
+              </button>
+              <div className="photo-upload-divider"><span>or</span></div>
+              <button type="button" className="photo-upload-link" onClick={() => fileInputRef.current?.click()}>
+                <Upload size={15} /> Upload from device
+              </button>
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            className="visually-hidden-input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+            onChange={handlePhotoFileChange}
+          />
         </div>
 
         <div className="file-complaint-footer">
@@ -554,6 +775,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
             style={{ borderRadius: '28px', padding: '16px' }}
             onClick={() => {
               setPhotoData(tempPhoto);
+              setPhotoFileName(tempPhotoName);
               setSubPage(null);
             }}
           >
@@ -653,7 +875,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
             </div>
           </button>
 
-          {/* Option 3: 📷 Photo / Video */}
+          {/* Option 3: 📷 Photo */}
           <button
             type="button"
             className={`option-equal-card ${isPhotoDone ? 'completed' : ''}`}
@@ -671,7 +893,7 @@ export default function FileComplaintScreen({ onBackToHome, onSubmitSuccess }) {
               <Camera size={22} />
             </div>
             <div className="option-text-group">
-              <h3 className="option-title">Photo / Video</h3>
+              <h3 className="option-title">Photo</h3>
               <p className="option-sub">Add evidence</p>
             </div>
           </button>
